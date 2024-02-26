@@ -1,0 +1,14 @@
+<%- include('./partials/header') %>
+<h1><%= title %></h1>
+<% if (author_list.length) { %>
+<ul>
+  <% for (const author of author_list) { %>
+  <li>
+    <a href="<%= author.url %>"><%= author.name %></a>
+    <%= author.lifespan && `(${author.lifespan})` %>
+  </li>
+  <% } %>
+</ul>
+<% } else { %>
+<p>There are no authors.</p>
+<% } %> <%- include('./partials/footer') %>
