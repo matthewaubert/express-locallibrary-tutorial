@@ -1,0 +1,13 @@
+<%- include('./partials/header') %>
+<h1><%= title %></h1>
+<% if (genre_list.length) { %>
+<ul>
+  <% for (const genre of genre_list) { %>
+  <li>
+    <a href="<%= genre.url %>"><%= genre.name %></a>
+  </li>
+  <% } %>
+</ul>
+<% } else { %>
+<p>There are no genres.</p>
+<% } %> <%- include('./partials/footer') %>
