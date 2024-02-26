@@ -1,0 +1,24 @@
+<%- include('./partials/header') %>
+<h1><%= title %></h1>
+<% if (bookinstance_list.length) { %>
+<ul>
+  <% for (const val of bookinstance_list) { %>
+  <li>
+    <a href="<%= val.book.title %>">
+      <%= `${val.book.title} : ${val.imprint}` %> -&nbsp;
+    </a>
+    <% if (val.status === 'Available') { %>
+    <span class="text-success"><%= val.status %></span>
+    <% } else if (val.status === 'Maintenance') { %>
+    <span class="text-danger"><%= val.status %></span>
+    <% } else { %>
+    <span class="text-warning"><%= val.status %></span>
+    <% } if (val.status !== 'Available') { %>
+    <span>(Due: <%= val.due_back %>)</span>
+    <% } %>
+  </li>
+  <% } %>
+</ul>
+<% } else { %>
+<p>There are no book copies in this library.</p>
+<% } %> <%- include('./partials/footer') %>
