@@ -1,0 +1,26 @@
+<%- include('./partials/header') %>
+<h1><%= title %></h1>
+
+<form action="" method="POST">
+  <div class="form-group">
+    <label for="name"></label>
+    <input
+      type="text"
+      id="name"
+      class="form-control"
+      placeholder="Fantasy, Poetry, etc."
+      name="name"
+      required
+      value="<%= locals.genre ? genre.name : '' %>"
+    />
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<% if (locals.errors) { %>
+<ul>
+  <% for (error of errors) { %>
+  <li><%- error.msg %></li>
+  <% } %>
+</ul>
+<% } %> <%- include('./partials/footer') %>
