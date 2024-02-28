@@ -28,7 +28,7 @@ AuthorSchema.virtual('url').get(function () {
   return `/catalog/author/${this._id}`;
 });
 
-// virtual for author's lifespan
+// virtual for author's lifespan, formatted like 'Jul 12, 1817 - May 6, 1862'
 AuthorSchema.virtual('lifespan').get(function () {
   const dateOfBirth = this.date_of_birth
     ? DateTime.fromJSDate(this.date_of_birth).toLocaleString(DateTime.DATE_MED)
@@ -38,6 +38,16 @@ AuthorSchema.virtual('lifespan').get(function () {
     : '';
 
   return dateOfBirth || dateOfDeath ? `${dateOfBirth} - ${dateOfDeath}` : '';
+});
+
+// virtual for author's date of birth, formatted 'yyyy-MM-dd' (e.g. '2024-02-28')
+AuthorSchema.virtual('date_of_birth_yyyy_mm_dd').get(function () {
+  return DateTime.fromJSDate(this.date_of_birth).toISODate();
+});
+
+// virtual for author's date of death, formatted 'yyyy-MM-dd' (e.g. '2024-02-28')
+AuthorSchema.virtual('date_of_death_yyyy_mm_dd').get(function () {
+  return DateTime.fromJSDate(this.date_of_death).toISODate();
 });
 
 // export model
