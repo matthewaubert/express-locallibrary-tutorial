@@ -80,7 +80,7 @@ exports.author_create_post = [
     });
 
     if (!errors.isEmpty()) {
-      // there are errors. Render form again w/ sanitized values / error messages.
+      // there are errors. Render form again w/ sanitized values / error msgs.
       res.render('author_form', {
         title: 'Create Author',
         author,
@@ -140,10 +140,79 @@ exports.author_delete_post = asyncHandler(async (req, res, next) => {
 
 // display Author update form on GET
 exports.author_update_get = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Author update GET');
+  // get author for form
+  const author = await Author.findById(req.params.id).exec();
+
+  if (author === null) {
+    // no results
+    const err = new Error('Author not found');
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render('author_form', {
+    title: 'Update Author',
+    author,
+  });
 });
 
 // handle Author update on POST
-exports.author_update_post = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Author update POST');
-});
+exports.author_update_post = [
+  // validate and sanitize fields
+  body('first_name')
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage('First name must be specified.')
+    .isAlphanumeric()
+    .withMessage('First name has non-alphanumeric characters.'),
+  body('family_name')
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage('Family name must be specified.')
+    .isAlphanumeric()
+    .withMessage('Family has non-alphanumeric characters'),
+  body('date_of_birth', 'Invalid date of birth')
+    .optional({ values: 'falsy' })
+    .isISO8601()
+    .toDate(),
+  body('date_of_death', 'Invalid date of death')
+    .optional({ values: 'falsy' })
+    .isISO8601()
+    .toDate(),
+
+  // process request after validation and sanitation
+  asyncHandler(async (req, res, next) => {
+    // extract the validation errors from a request
+    const errors = validationResult(req);
+
+    // create Author object with escaped and trimmed data and old id
+    const author = new Author({
+      first_name: req.body.first_name,
+      family_name: req.body.family_name,
+      date_of_birth: req.body.date_of_birth,
+      date_of_death: req.body.date_of_death,
+      _id: req.params.id, // This is required, or a new ID will be assigned
+    });
+
+    if (!errors.isEmpty()) {
+      // there are errors. Render form again w/ sanitized values / error msgs.
+      res.render('author_form', {
+        title: 'Create Author',
+        author,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // data from form is valid. Update the author.
+      const updatedAuthor = await Author.findByIdAndUpdate(
+        req.params.id,
+        author,
+        {}
+      );
+      // redirect to author detail page
+      res.redirect(updatedAuthor.url);
+    }
+  }),
+];
