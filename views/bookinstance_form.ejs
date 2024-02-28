@@ -8,7 +8,7 @@
       <option value="">--Please select a book--</option>
       <!-- prettier-ignore -->
       <% for (const book of book_list) { %>
-      <% if (locals.selected_book && selected_book === book._id.toString()) { %>
+      <% if (locals.selected_book && selected_book.toString() === book._id.toString()) { %>
       <option value="<%= book._id %>" selected><%= book.title %></option>
       <% } else { %>
       <option value="<%= book._id %>"><%= book.title %></option>
@@ -25,7 +25,7 @@
       placeholder="Publisher and date information"
       name="imprint"
       required
-      value="<%= locals.bookinstance ? bookinstance.print : '' %>"
+      value="<%= locals.bookinstance ? bookinstance.imprint : '' %>"
     />
   </div>
   <div class="form-group">

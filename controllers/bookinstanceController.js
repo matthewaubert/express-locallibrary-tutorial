@@ -116,10 +116,76 @@ exports.bookinstance_delete_post = asyncHandler(async (req, res, next) => {
 
 // Display BookInstance update form on GET.
 exports.bookinstance_update_get = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: BookInstance update GET');
+  // get bookInstance, books for form (in parallel)
+  const [bookInstance, allBooks] = await Promise.all([
+    BookInstance.findById(req.params.id).populate('book').exec(),
+    Book.find({}, 'title').sort({ title: 1 }).exec(),
+  ]);
+
+  if (bookInstance === null) {
+    // no results
+    const err = new Error('Book copy not found');
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render('bookinstance_form', {
+    title: 'Update BookInstance',
+    book_list: allBooks,
+    selected_book: bookInstance.book._id,
+    bookinstance: bookInstance,
+  });
 });
 
 // Handle BookInstance update on POST.
-exports.bookinstance_update_post = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: BookInstance update POST');
-});
+exports.bookinstance_update_post = [
+  // validate and sanitize fields
+  body('book', 'book must be specified').trim().isLength({ min: 1 }).escape(),
+  body('imprint', 'Imprint must be specified')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('status').escape(),
+  body('due_back', 'Invalid date')
+    .optional({ values: 'falsy' })
+    .isISO8601()
+    .toDate(),
+
+  // process request after validation and sanitation
+  asyncHandler(async (req, res, next) => {
+    // extract the validation errors from a request
+    const errors = validationResult(req);
+
+    // create a BookInstance object w/ escaped / trimmed data and old id
+    const bookInstance = new BookInstance({
+      book: req.body.book,
+      imprint: req.body.imprint,
+      status: req.body.status,
+      due_back: req.body.due_back,
+      _id: req.params.id, // This is required, or a new ID will be assigned
+    });
+
+    if (!errors.isEmpty()) {
+      // there are errors. Render form again w/ sanitized values and error msgs
+      const allBooks = await Book.find({}, 'title').sort({ title: 1 }).exec();
+
+      res.render('bookinstance_form', {
+        title: 'Create BookInstance',
+        book_list: allBooks,
+        selected_book: bookInstance.book._id,
+        errors: errors.array(),
+        bookinstance: bookInstance,
+      });
+      return;
+    } else {
+      // data from form is valid. Update the record.
+      const updatedBookInstance = await BookInstance.findByIdAndUpdate(
+        req.params.id,
+        bookInstance,
+        {}
+      );
+      // redirect to bookinstance detail page
+      res.redirect(updatedBookInstance.url);
+    }
+  }),
+];
