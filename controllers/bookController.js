@@ -4,6 +4,7 @@ const Genre = require('../models/genre');
 const BookInstance = require('../models/bookinstance');
 
 const asyncHandler = require('express-async-handler');
+const { body, validationResult } = require('express-validator');
 
 exports.index = asyncHandler(async (req, res, next) => {
   // get details of books, book instances, authors, and genre counts (in parallel)
@@ -65,13 +66,89 @@ exports.book_detail = asyncHandler(async (req, res, next) => {
 
 // Display book create form on GET.
 exports.book_create_get = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Book create GET');
+  // get all authors and genres, which we can use for adding to our book
+  const [allAuthors, allGenres] = await Promise.all([
+    Author.find().sort({ family_name: 1 }).exec(),
+    Genre.find().sort({ name: 1 }).exec(),
+  ]);
+
+  res.render('book_form', {
+    title: 'Create Book',
+    authors: allAuthors,
+    genres: allGenres,
+  });
 });
 
 // Handle book create on POST.
-exports.book_create_post = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Book create POST');
-});
+exports.book_create_post = [
+  // convert the the genre to an array
+  (req, res, next) => {
+    if (!Array.isArray(req.body.genre)) {
+      req.body.genre =
+        typeof req.body.genre === 'undefined' ? [] : [req.body.genre];
+    }
+    next();
+  },
+
+  // validate and sanitize fields
+  body('title', 'Title must not be empty.')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('author', 'Author must not be empty.')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('summary', 'Summary must not be empty.')
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body('isbn', 'ISBN must not be empty').trim().isLength({ min: 1 }).escape(),
+  body('genre.*').escape(),
+
+  // process request after validation and sanitation
+  asyncHandler(async (req, res, next) => {
+    // extract the validation errors from a request
+    const errors = validationResult(req);
+
+    // create a Book object with escaped and trimmed data
+    const book = new Book({
+      title: req.body.title,
+      author: req.body.author,
+      summary: req.body.summary,
+      isbn: req.body.isbn,
+      genre: req.body.genre,
+    });
+    console.log(book);
+
+    if (!errors.isEmpty()) {
+      // there are errors. Render form again w/ sanitized values / error messages.
+      // get all authors and genres for form
+      const [allAuthors, allGenres] = await Promise.all([
+        Author.find().sort({ family_name: 1 }).exec(),
+        Genre.find().sort({ name: 1 }).exec(),
+      ]);
+
+      // mark our selected genres as checked
+      for (const genre of allGenres) {
+        if (book.genre.includes(genre._id)) {
+          genre.checked = 'true';
+        }
+      }
+      res.render('book_form', {
+        title: 'Create Book',
+        authors: allAuthors,
+        genres: allGenres,
+        book,
+        errors: errors.array(),
+      });
+    } else {
+      // data from form is valid. Save book.
+      await book.save();
+      res.redirect(book.url);
+    }
+  }),
+];
 
 // Display book delete form on GET.
 exports.book_delete_get = asyncHandler(async (req, res, next) => {

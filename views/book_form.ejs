@@ -1,0 +1,92 @@
+<%- include('./partials/header') %>
+<h1><%= title %></h1>
+
+<form action="" method="POST">
+  <div class="form-group">
+    <label for="title">Title:</label>
+    <input
+      type="text"
+      id="title"
+      class="form-control"
+      placeholder="Name of book"
+      name="title"
+      required
+      value="<%= locals.book ? book.title : '' %>"
+    />
+  </div>
+  <div class="form-group">
+    <label for="author">Author:</label>
+    <select name="author" id="author" class="form-control" required>
+      <option value="">--Please select an author--</option>
+      <!-- prettier-ignore -->
+      <% for (const author of authors) { %>
+      <% if (locals.book && author._id.toString() === book.author._id.toString()) { %>
+      <option value="<%= author._id %>" selected><%= author.name %></option>
+      <% } else { %>
+      <option value="<%= author._id %>"><%= author.name %></option>
+      <% } } %>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="summary">Summary:</label>
+    <!-- prettier-ignore -->
+    <textarea
+      id="summary"
+      cols="30"
+      rows="10"
+      class="form-control"
+      placeholder="Summary"
+      name="summary"
+      required
+    ><%= locals.book ? book.summary : '' %></textarea>
+  </div>
+  <div class="form-group">
+    <label for="isbn">ISBN:</label>
+    <input
+      type="text"
+      id="isbn"
+      class="form-control"
+      placeholder="ISBN13"
+      name="isbn"
+      value="<%= locals.book ? book.isbn : '' %>"
+      required
+    />
+  </div>
+  <div class="form-group">
+    <label for="">Genre:</label>
+    <div>
+      <% for (const genre of genres) { %>
+      <div style="display: inline; padding-right: 10px">
+        <% if (genre.checked) { %>
+        <input
+          type="checkbox"
+          class="checkbox-input"
+          name="genre"
+          id="<%= genre._id %>"
+          value="<%= genre._id %>"
+          required
+        />
+        <% } else { %>
+        <input
+          type="checkbox"
+          class="checkbox-input"
+          name="genre"
+          id="<%= genre._id %>"
+          value="<%= genre._id %>"
+        />
+        <% } %>
+        <label for="<%= genre._id %>">&nbsp;<%= genre.name %></label>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <button class="btn btn-primary" type="submit">Submit</button>
+</form>
+
+<% if (locals.errors) { %>
+<ul>
+  <% for (error of errors) { %>
+  <li><%- error.msg %></li>
+  <% } %>
+</ul>
+<% } %> <%- include('./partials/footer') %>
