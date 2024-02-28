@@ -21,8 +21,14 @@ BookInstanceSchema.virtual('url').get(function () {
   return `/catalog/bookinstance/${this._id}`;
 });
 
+// virtual for due back date, formatted like 'Feb 28, 2024'
 BookInstanceSchema.virtual('due_back_formatted').get(function () {
   return DateTime.fromJSDate(this.due_back).toLocaleString(DateTime.DATE_MED);
+});
+
+// virtual for due back date, formatted 'yyyy-MM-dd' (e.g. '2024-02-28')
+BookInstanceSchema.virtual('due_back_yyyy_mm_dd').get(function () {
+  return DateTime.fromJSDate(this.due_back).toISODate();
 });
 
 // Export model
