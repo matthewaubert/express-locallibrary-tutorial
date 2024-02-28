@@ -57,7 +57,7 @@ exports.genre_create_post = [
     const genre = new Genre({ name: req.body.name });
 
     if (!errors.isEmpty()) {
-      // there are errors. Render the form again w/ sanitized values / error messages.
+      // there are errors. Render the form again w/ sanitized values / error msgs.
       res.render('genre_form', {
         title: 'Create Genre',
         genre,
@@ -126,10 +126,61 @@ exports.genre_delete_post = asyncHandler(async (req, res, next) => {
 
 // Display Genre update form on GET.
 exports.genre_update_get = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Genre update GET');
+  // get genre for form
+  const genre = await Genre.findById(req.params.id).exec();
+
+  if (genre === null) {
+    // no results
+    const err = new Error('Genre not found');
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render('genre_form', {
+    title: 'Update Genre',
+    genre,
+  });
 });
 
 // Handle Genre update on POST.
-exports.genre_update_post = asyncHandler(async (req, res, next) => {
-  res.send('NOT IMPLEMENTED: Genre update POST');
-});
+exports.genre_update_post = [
+  // validate and sanitize the name field
+  body('name', 'Genre name must contain at least 3 characters')
+    .trim()
+    .isLength({ min: 3 })
+    .escape(),
+
+  // process request after validation and sanitation
+  asyncHandler(async (req, res, next) => {
+    // extract the validation errors from a request
+    const errors = validationResult(req);
+
+    // create the genre object with escaped / trimmed data and old id
+    const genre = new Genre({
+      name: req.body.name,
+      _id: req.params.id, // This is required, or a new ID will be assigned
+    });
+
+    if (!errors.isEmpty()) {
+      // there are errors. Render the form again w/ sanitized values / error msgs.
+      res.render('genre_form', {
+        title: 'Update Genre',
+        genre,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // data from form is valid. Check if Genre w/ same name already exists.
+      const genreExists = await Genre.findOne({ name: req.body.name }).exec();
+      if (genreExists) {
+        // genre exists. Redirect to its detail page
+        res.redirect(genreExists.url);
+      } else {
+        // update the record
+        const updatedGenre = await Genre.findByIdAndUpdate(req.params.id, genre, {});
+        // redirect to genre detail page.
+        res.redirect(updatedGenre.url);
+      }
+    }
+  }),
+];
